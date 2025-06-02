@@ -1,6 +1,5 @@
 outputs/
 *.log
-*.csv
 *.png
 *.jpg
 *.jpeg
