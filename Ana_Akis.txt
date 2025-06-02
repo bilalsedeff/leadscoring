@@ -1,0 +1,208 @@
+# Lead Scoring Pipeline - Ana Akış
+
+Bu belge, Lead Scoring pipeline'ının ana akışını ve detaylarını açıklar.
+
+## Proje Yapısı
+
+```
+pipeline/
+├── configs/            # Yapılandırma dosyaları
+├── data/               # Veri dosyaları
+│   ├── interim/        # Ara işlem veri dosyaları
+│   ├── processed/      # İşlenmiş veri dosyaları
+│   └── raw/            # Ham veri dosyaları (Conversion_Datamart.csv)
+├── notebooks/          # Jupyter Notebooks
+├── outputs/            # Çıktı dosyaları (her run için ayrı klasör)
+│   └── run_timestamp/  # Her run için zaman damgalı ayrı klasör
+│       ├── feature_importance/  # Özellik önemleri
+│       ├── logs/               # Log dosyaları
+│       ├── models/             # Eğitilen modeller
+│       ├── split/              # Bölünmüş veri setleri
+│       └── statistical_tests/  # İstatistiksel test sonuçları
+├── src/                # Kaynak kodlar
+│   ├── calibration/    # Model kalibrasyonu
+│   ├── cli/            # Komut satırı arayüzü
+│   ├── evaluation/     # Model değerlendirme
+│   ├── features/       # Özellik mühendisliği
+│   ├── imbalance/      # Dengesiz veri işleme
+│   ├── ingestion/      # Veri okuma
+│   ├── models/         # Model tanımları
+│   ├── pipelines/      # Ana pipeline'lar
+│   ├── preprocessing/  # Veri ön işleme
+│   ├── registry/       # Model kaydı (MLflow)
+│   ├── tests/          # Birim testler
+│   └── utils/          # Yardımcı işlevler
+├── streamlit_app/      # Streamlit dashboard
+├── lead_scoring.py     # Ana başlangıç noktası
+└── requirements.txt    # Gereksinimler
+```
+
+## Ana Akış Bileşenleri
+
+| Adım                        | İlgili Modül(ler)                                               | Açıklama                                                                                        | Not                                     |
+|-----------------------------|----------------------------------------------------------------|---------------------------------------------------------------------------------------------------|-----------------------------------------|
+| **1. Veri Hazırlama**       | `src/ingestion/loader.py`                                       | Ham verinin yüklenmesi ve temel işlemler                                                         | Data leak riski var, dikkatli kullanın! |
+| **2. Veri Bölme**           | `src/pipelines/split.py`, `src/preprocessing/splitters.py`      | Zamansal veri bölme ve stratified sampling                                                         | Veri sızıntısını önlemek için ham veri bölünür, SADECE train üzerinde temizleyici eğitilir |
+| **3. Özellik Mühendisliği** | `src/features/engineering.py`                                   | İleri seviye özellik türetme                                                                      | Temporal ve istatistiksel özellikler    |
+| **4. İstatistiksel Testler**| `src/pipelines/statistical_tests.py`                            | Özellik analizleri ve hipotez testleri                                                            | Chi-square, T-test, ANOVA, correlation  |
+| **5. Özellik Seçimi**       | `src/features/importance.py`, `src/pipelines/feature_importance.py` | Özellik önem skorları ve seçimi                                                                   | Permutation importance, stability        |
+| **6. Model Eğitimi**        | `src/pipelines/train.py`, `src/models/*`                        | Model eğitimi ve optimizasyon                                                                     | Çeşitli ML algoritmaları                 |
+| **7. Model Kalibrasyonu**   | `src/calibration/*`                                             | Olasılık kalibrasyonu ve bin atama                                                                | ISO calibration                          |
+| **8. Değerlendirme**        | `src/evaluation/*`                                              | Model performans ölçümleri                                                                        | TPR, TNR, AUC, precision-recall        |
+| **9. Yorumlama**            | `streamlit_app/app.py`                                          | Etkileşimli dashboard ve görselleştirme                                                           | Streamlit UI                            |
+
+## Ana Bileşen Detayları
+
+### Veri Hazırlama ve Bölme (`src/pipelines/split.py`)
+
+1. **Veri yükleme**: Ham veri `data/raw/Conversion_Datamart.csv` dosyasından okunur.
+2. **Zamansal bölme**: Ham veri önce zaman bazlı olarak bölünür (veri sızıntısını önlemek için), parametreler:
+   - `train_cutoff`: Eğitim veri seti için kesme noktası (YYYYMM formatında, örn: 72024)
+   - `val_cutoff`: Validasyon veri seti için kesme noktası (YYYYMM formatında, örn: 122024)
+   - `test_cutoff`: Test veri seti için kesme noktası (YYYYMM formatında, örn: 42025)
+   - `force_balance`: Her sette mutlaka veri olmasını zorlama parametresi (özellikle test seti için önemli)
+3. **Grup bütünlüğü**: `account_Id` bazında aynı hesaba ait kayıtların aynı split'e düşmesi sağlanır.
+4. **Temizleme**: BasicCleaner SADECE train verisi üzerinde fit edilir, ardından tüm setlere transform uygulanır (veri sızıntısını önlemek için).
+5. **Kaydetme**: Train, validation ve test setleri `outputs/run_timestamp/split/` altına kaydedilir.
+
+### Özellik Mühendisliği (`src/features/engineering.py`)
+
+1. **Zaman Özellikleri**: YearMonth bazlı trend, mevsimsellik ve gecikme (lag) özellikleri.
+2. **Gruplama Özellikleri**: Account bazlı istatistikler (ortalama, medyan, std, min, max).
+3. **Etkileşim Özellikleri**: Kategorik ve sayısal değişkenler arası etkileşimler.
+4. **Rolling Window**: Belirli zaman penceresi içindeki değerlerin istatistikleri.
+
+### İstatistiksel Testler (`src/pipelines/statistical_tests.py`)
+
+1. **Ki-kare Testi**: Kategorik değişkenler için hedef değişkenle ilişki testi.
+2. **T-test ve ANOVA**: Sayısal değişkenlerin grup bazlı karşılaştırmaları.
+3. **Korelasyon Analizi**: Sayısal değişkenler arası ilişkiler.
+4. **Dönüşüm Oranı Analizi**: Kategorik değişken segmentlerinin dönüşüm oranı karşılaştırması.
+5. **Otomatik Sütun Eleme**: Aşağıdaki kolonlar analizlerden otomatik olarak çıkarılır:
+   - ID kolonları (LeadId, account_Id, Opportunityid, vb.)
+   - Tarih kolonları (LeadCreatedDate, ConvertedDate, vb.)
+   - Yüksek kardinaliteli kolonlar (Branch_Name__c, BranchName, vb.)
+   - Eşsiz değer sayısı çok yüksek olan kolonlar (anlamsız görselleştirmeler oluşturan kolonlar)
+
+### Özellik Seçimi (`src/pipelines/feature_importance.py`)
+
+1. **Permutation Importance**: Model bazlı özellik önem skorlaması.
+2. **Stability Selection**: Farklı veri örneklemlerinde özellik stabilitesi.
+3. **Otomatik Seçim**: En önemli özelliklerin seçimi ve yapılandırma dosyasına kaydedilmesi.
+
+### Model Eğitimi (`src/pipelines/train.py`)
+
+1. **Çeşitli Modeller**: LightGBM, XGBoost, LogisticRegression, vb.
+2. **Hiperparametre Optimizasyonu**: Optuna ile bayesian optimizasyon.
+3. **Source Bazlı Modeller**: Farklı kaynak segmentleri için ayrı modeller.
+4. **Ensemble Modeller**: Çeşitli modellerin birleşimi.
+
+### Model Kalibrasyonu (`src/calibration/`)
+
+1. **Olasılık Kalibrasyonu**: Isotonic Regression ve Platt Scaling.
+2. **Bin Atama**: Skorları anlamlı segmentlere atama:
+   - Low Potential: 0.0 - 0.25
+   - Medium Potential: 0.25 - 0.75
+   - High Potential: 0.75 - 1.0
+3. **Bin Doğrulama**: Her segment için gerçek dönüşüm oranları artan sırada olmalı.
+
+### Değerlendirme (`src/evaluation/`)
+
+1. **Metrikler**: AUC, precision, recall, F1, calibration error, vb.
+2. **Confusion Matrix**: TP, TN, FP, FN ve oranlardaki anlamlı farklar.
+3. **Threshold Analizi**: Farklı threshold değerleri için metrik değişimleri.
+4. **Segment Analizi**: Farklı tahmin segmentlerinin gerçek dönüşüm oranları.
+
+### CLI Arayüzü (`src/cli/app.py`)
+
+1. **Etkileşimli Menü**: Tüm işlemler için kolay kullanımlı arayüz.
+2. **Adım Adım Yürütme**: Her adımı ayrı ayrı veya tam akışı çalıştırma.
+3. **Yapılandırma**: Tüm parametreleri terminal üzerinden yapılandırma.
+4. **Run Yönetimi**: Yeni run klasörü oluşturma veya mevcut run klasörünü düzgün bir şekilde yönetir.
+
+### Streamlit Dashboard (`streamlit_app/app.py`)
+
+1. **Model Metrikleri**: AUC, precision-recall eğrileri.
+2. **Özellik Önemleri**: En önemli özelliklerin görselleştirilmesi.
+3. **Tahmin Dağılımı**: Segment bazlı dağılımlar ve gerçek dönüşüm oranları.
+4. **Etkileşimli Analiz**: Farklı segmentler ve özellikler için detaylı analizler.
+
+## Başlangıç Noktaları
+
+| Dosya                       | Açıklama                                                                                 | Entegrasyon                                |
+|-----------------------------|------------------------------------------------------------------------------------------|-------------------------------------------|
+| `lead_scoring.py`           | Ana başlangıç noktası ve merkezi OUTPUT_DIR & proje kök dizini yönetimi                           | CLI entegrasyonu                          |
+| `src/cli/app.py`            | Etkileşimli CLI arayüzü                                                                  | Tüm pipeline bileşenlerini çağırır        |
+| `streamlit_app/app.py`      | Streamlit dashboard                                                                      | Sonuçları görselleştirir                   |
+| `start_lead_scoring.bat`    | Windows için başlatma script'i                                                           | CLI arayüzünü başlatır                     |
+
+## Önemli Notlar
+
+1. **Veri Sızıntısı Önleme**: Tüm preprocessing ve feature engineering adımları SADECE train verisi üzerinde fit edilir, transform tüm setlere uygulanır.
+2. **Run Yönetimi**: Her yeni çalıştırma için ayrı bir zaman damgalı klasör oluşturulabilir veya mevcut run klasörü kullanılabilir.
+3. **Test Seti Boş Olma Sorunu Çözüldü**: `force_balance=True` parametresi ile tüm setlerde veri olması garanti edilir.
+4. **Grup Bütünlüğü**: Aynı `account_Id`'ye sahip kayıtlar aynı veri setine düşer, böylece model gerçek dünyada karşılaşmadığı hesaplar üzerinde test edilebilir.
+5. **Hedef Metrikler**: TPR (True Positive Rate) ve TNR (True Negative Rate) maksimize edilmeli, segment bazlı conversion rate'ler anlamlı şekilde artmalıdır.
+
+## Kullanım Örnekleri
+
+### CLI ile:
+
+```bash
+# Interactive mode
+python lead_scoring.py cli
+
+# Doğrudan veri bölme
+python -m src.pipelines.split --train-cutoff=72024 --val-cutoff=122024 --test-cutoff=42025 --force-balance
+
+# İstatistiksel testler
+python -m src.pipelines.statistical_tests --test_type=all --use_train_only
+
+# Özellik önemleri
+python -m src.pipelines.feature_importance --train-path=outputs/split/train.csv
+
+# Model eğitimi
+python -m src.pipelines.train
+```
+
+### Streamlit Dashboard:
+
+```bash
+# Dashboard başlatma
+streamlit run streamlit_app/app.py
+```
+
+## Güncel İyileştirmeler
+
+1. **Veri Sızıntısı Önleme İyileştirmesi**: Split adımında artık önce ham veri zaman bazlı bölünür, sonra SADECE train verisi üzerinde temizleyici eğitilir ve ardından dönüştürme işlemleri uygulanır. Bu yaklaşım, test ve validation verilerinin özelliklerinin train aşamasında sızmasını önler.
+
+2. **Test Seti Boş Olma Sorunu Çözümü**: 
+   - Yeni `force_balance` parametresi eklendi, bu parametre tüm setlerde mutlaka veri olmasını garanti eder.
+   - `splitters.py` dosyasında akıllı dengeleme mekanizmaları geliştirildi:
+     - Eğer test seti boş ise, validation setinden akıllıca veri aktarılır
+     - Eğer validation seti boş ise, train setinden veri aktarılır
+     - Hiyerarşik veri aktarımı ile tüm setlerde veri olması sağlanır
+
+3. **CLI İyileştirmesi**: CLI arayüzü artık kullanıcıya her çalıştırmada yeni run klasörü oluşturup oluşturmama seçeneği sunar ve mevcut run klasörünü düzgün bir şekilde yönetir. Bu sayede gereksiz run klasörleri oluşmaz.
+
+4. **Experiment Dizini Yönetimi**: `src/utils/paths.py` dosyasına eklenen `update_experiment_dir` fonksiyonu sayesinde, CLI'dan yeni run klasörü oluşturulduğunda tüm modüller bu değişiklikten haberdar olur.
+
+5. **Gelişmiş Hata Yakalama**: Özellik mühendisliği, istatistiksel testler ve diğer adımlarda daha güçlü hata yakalama ve kontrol mekanizmaları eklendi. Bu sayede pipeline daha dayanıklı hale getirildi.
+
+6. **Otomatik Split Oluşturma**: İstatistiksel testler ve diğer komutlar artık split verisi bulunamadığında otomatik olarak split işlemini başlatabilir. Bu özellik sayesinde:
+   - Kullanıcı doğrudan `stats` veya `feature-imp` gibi komutları çalıştırabilir
+   - Split verisi bulunamazsa, otomatik olarak split oluşturulur (zaman-bazlı bölme ile)
+   - Birden fazla olası veri konumu kontrol edilir (outputs/split, data/processed, en son run dizini, vb.)
+   - `--auto_split` parametresi ile bu özellik açılıp kapatılabilir (varsayılan olarak açık)
+
+7. **Modülerlik ve Hydra Yapılandırması**: Train.py dosyasında Hydra doğru şekilde kullanılıyor, tüm model parametreleri `configs/model.yaml` dosyasından alınıyor. Bu sayede:
+   - Hardcoded değerler yerine YAML yapılandırması kullanılıyor
+   - Farklı modeller için yapılandırma değişiklikleri kolayca yapılabiliyor
+   - Kullanılmayan importlar temizlendi ve kod daha okunabilir hale getirildi
+   - Feature engineering, preprocessing, evaluation gibi diğer modüller doğru şekilde entegre edildi
+
+8. **Rolling Window Hesaplamaları İyileştirmesi**: Zamansal özellik oluşturma sırasında rolling window hesaplamalarında yaşanan sorunlar giderildi. Bu sayede:
+   - Daha sağlam ve hata tolere eden hesaplama mekanizması eklendi
+   - Eksik tarih verileri durumunda alternatif stratejiler uygulanıyor
+   - Geçersiz window değerleri otomatik olarak düzeltiliyor (negatif veya sıfır değerler)
+   - Her bir hesaplama adımında ayrıntılı hata yakalama ve loglama eklendi

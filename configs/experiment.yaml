@@ -1,0 +1,41 @@
+# Tek giriş noktası
+defaults:
+  - data
+  - split
+  - model
+  - cleaning
+
+experiment_name: lead_scoring
+model_family: "ensemble"  # 'baseline', 'tree', 'source_specific', 'ensemble'
+# Optuna hiperparametre optimizasyonu ayarları
+use_optuna: false         # Optuna ile hiperparametre optimizasyonu kullanılacak mı?
+n_trials: 100             # Denenecek hiperparametre kombinasyonu sayısı
+timeout: 3600             # Maksimum çalışma süresi (saniye)
+metric: "roc_auc"         # Optimize edilecek metrik
+direction: "maximize"     # "maximize" veya "minimize"
+pruner: "hyperband"       # "hyperband", "median", "percentile" veya "none"
+cv_folds: 5               # Cross-validation fold sayısı
+early_stopping_rounds: 30 # Early stopping için gerekli round sayısı
+random_state: 42          # Randomizasyon için seed değeri
+stratify: true
+
+# NOT: Özellik seçimi parametreleri artık configs/cleaning.yaml dosyasından alınmaktadır
+# feature_selection bölümü kaldırılmıştır.
+
+# Encoder settings
+encoding:
+  target_encode: false      # Target encoding yerine one-hot encoding kullan
+  handle_unknown: "ignore"  # Bilinmeyen kategoriler için strateji ('ignore', 'error')
+
+# Imbalance settings
+imbalance:
+  method: "class_weight"    # 'smote', 'adasyn', 'class_weight', 'none'
+  sampling_strategy: "auto" # 'auto', 'minority', 'majority', 'not minority', 'not majority', 'all'
+  k_neighbors: 5            # SMOTE/ADASYN için komşu sayısı
+
+# Numeric and categorical features (auto-update with feature importance)
+num_cols: []
+cat_cols: []
+
+cat_idx: []  # preprocessing.build_preprocessor dolduruyor
+target: ${split.target}

@@ -1,0 +1,315 @@
+# =======================================================================  
+# Lead-Scoring  v2.0 – data.yaml  
+# =======================================================================  
+paths:  
+  raw_csv:            ${oc.env:PROJECT_ROOT}/data/raw/Conversion_Datamart.csv  
+  interim_parquet:    ${oc.env:PROJECT_ROOT}/data/interim/datamart_raw.parquet  
+
+# -----------------------------------------------------------------------  
+# explicit dtype mapping  (pandas read_csv dtype=…)  
+# -----------------------------------------------------------------------  
+dtypes:  
+  # ─── Kimlik & kategori ───────────────────────────────────────────────  
+  LeadId:                           str  
+  account_Id:                       str  
+  JourneyNumber:                    int8  
+  Source_Final__c:                  category  
+  Channel_Final__c:                 category  
+  Recordtypedevelopername:          category  
+  Segment_Name:                     category  
+  Segment_Trend:                    category  
+  Customer_Status:                  category  
+  Cust_KVKK_Desc:                   category  
+  Cust_KVKK_PrimaryContact:         category  
+  Last_Service_Branch_Name:         category  
+  Cust_Service_Flag:                int8            # 0/1  
+  CustomerLoyalty_Flag:             int8  
+  Cust_Already_Churn_Flag:          int8  
+  Filo:                             int8  
+  Target_IsConverted:               int8  
+  
+  # ─── Tarih proxy/kategorik (örn. YearMonth) ve segmentlerde kategori kullanılabilir  
+  YearMonth:                        category  
+  YearMonth_3M:                     category  
+  YearMonth_6M:                     category  
+  YearMonth_1Y:                     category  
+  YearMonth_2Y:                     category  
+  Cust_1st_Vehicle_Model:           category  
+  Segment_3M:                       category  
+  Segment_6M:                       category  
+  Segment_1Y:                       category  
+  Segment_2Y:                       category  
+  Segment_Trend_3M:                 category  
+  Segment_Trend_6M:                 category  
+  Segment_Trend_1Y:                 category  
+  Segment_Trend_2Y:                 category  
+  
+  # ─── Binary KVKK/ETK kanalları (0/1) ─────────────────────────────────  
+  Cust_ETK_SMS_Jaguar_Flag:         int8  
+  Cust_ETK_SMS_LR_Flag:             int8  
+  Cust_ETK_SMS_MC_Flag:             int8  
+  Cust_ETK_SMS_MINI_Flag:           int8  
+  Cust_ETK_SMS_BMW_Flag:            int8  
+  Cust_ETK_Phone_Jaguar_Flag:       int8  
+  Cust_ETK_Phone_LR_Flag:           int8  
+  Cust_ETK_Phone_MC_Flag:           int8  
+  Cust_ETK_Phone_MINI_Flag:         int8  
+  Cust_ETK_Phone_BMW_Flag:          int8  
+  Cust_ETK_email_Jaguar_Flag:       int8  
+  Cust_ETK_email_LR_Flag:           int8  
+  Cust_ETK_email_MC_Flag:           int8  
+  Cust_ETK_email_MINI_Flag:         int8  
+  Cust_ETK_email_BMW_Flag:          int8  
+  
+  # ─── Zaman serisi hesap sayaçları ────────────────────────────────────  
+  SameDayAlikeLeads:                int16  
+  Source_Web_Trial_Last_1M:         int16  
+  Source_App_Trial_Last_1M:         int16  
+  Source_Ecommerce_Trial_Last_1M:   int16  
+  Source_SocialMedia_Trial_Last_1M: int16  
+  TotalLeadsInJourney_ToDate:       int16  
+  JourneyDurationDays_ToDate:       int16  
+  
+  # ---- 6M/1Y/2Y/3Y/36Y lead ve conversion sayaçları ----  
+  Web_LeadCount_L6M:                int16  
+  Web_ConvertedCount_L6M:           int16  
+  App_LeadCount_L6M:                int16  
+  App_ConvertedCount_L6M:           int16  
+  Ecommerce_LeadCount_L6M:          int16  
+  Ecommerce_ConvertedCount_L6M:     int16  
+  SocialMedia_LeadCount_L6M:        int16  
+  SocialMedia_ConvertedCount_L6M:   int16  
+  Total_LeadCount_L6M:              int16  
+  Total_ConvertedCount_L6M:         int16  
+  
+  Web_LeadCount_L1Y:                int16  
+  Web_ConvertedCount_L1Y:           int16  
+  App_LeadCount_L1Y:                int16  
+  App_ConvertedCount_L1Y:           int16  
+  Ecommerce_LeadCount_L1Y:          int16  
+  Ecommerce_ConvertedCount_L1Y:     int16  
+  SocialMedia_LeadCount_L1Y:        int16  
+  SocialMedia_ConvertedCount_L1Y:   int16  
+  Total_LeadCount_L1Y:              int16  
+  Total_ConvertedCount_L1Y:         int16  
+  
+  Total_LeadCount_L2Y:              int16  
+  Total_ConvertedCount_L2Y:         int16  
+  Total_LeadCount_L3Y:              int16  
+  Total_ConvertedCount_L3Y:         int16  
+  Total_LeadCount_L36Y:             int16  
+  Total_ConvertedCount_L36Y:        int16  
+  
+  # --- Hizmet / satış sayaçları (küçük tam sayılar) ----  
+  Vehicle_Count:                    int16  
+  Cust_First_Service_NOMS:          int16  
+  Cust_Last_Service_NOMS:           int16  
+  Cust_First_Sales_NOMS:            int16  
+  Cust_Last_Sales_NOMS:             int16  
+  Cust_Last_NewCar_Sales_NOMS:      int16  
+  Cust_Last_UsedCar_Sales_NOMS:     int16  
+  Cust_Last_Renting_NOMS:           int16  
+  Cust_Avg_Service_Count:           float32  
+  Cust_Service_Count_L610Y:         int16  
+  Cust_Service_Count_LY:            int16  
+  Cust_Avg_Vehicle_Count:           float32  
+  Cust_AddService_Count_L3Y:        int16  
+  Cust_AddService_Count_L36Y:       int16  
+  Cust_AddService_Count_L610Y:      int16  
+  Cust_AddService_Count_LY:         int16  
+  Cust_Rental_Count_L3Y:            int16  
+  Cust_Rental_Count_L36Y:           int16  
+  Cust_Rental_Count_L610Y:          int16  
+  Cust_Rental_Count_LY:             int16  
+  Cust_NewCar_Count:                int16  
+  Cust_UsedCar_Count:               int16  
+  Cust_NewCar_Count_L3Y:            int16  
+  Cust_UsedCar_Count_L3Y:           int16  
+  Cust_NewCar_Count_L36Y:           int16  
+  Cust_UsedCar_Count_L36Y:          int16  
+  Cust_NewCar_Count_L610Y:          int16  
+  Cust_UsedCar_Count_L610Y:         int16  
+  Cust_NewCar_Count_LY:             int16  
+  Cust_UsedCar_Count_LY:            int16  
+  Cust_Vehicle_Count:               int16  
+  Cust_Vehicle_Count_L3Y:           int16  
+  Cust_Vehicle_Count_L36Y:          int16  
+  Cust_Vehicle_Count_L610Y:         int16  
+  Cust_Vehicle_Count_LY:            int16  
+  Cust_Vehicle_Count_L2Y:           int16  
+  Cust_Vehicle_Count_L4Y:           int16  
+  Cust_Vehicle_Count_L5Y:           int16  
+  Cust_Vehicle_Count_L6Y:           int16  
+  Cust_Jaguar_Vehicle_Count:        int16  
+  Cust_LandRover_Vehicle_Count:     int16  
+  Cust_MINI_Vehicle_Count:          int16  
+  Cust_MC_Vehicle_Count:            int16  
+  Cust_BMWi_Vehicle_Count:          int16  
+  Cust_BMW_Vehicle_Count:           int16  
+  
+  # --- Skor / oran / para değerleri (float32) ----  
+  NPS_Score:                        float32  
+  NPS_Score_NOMS:                   float32  
+  Retention_Score_Current_1st:      float32  
+  Cust_Churn_Score_Current:         float32  
+  Retention_Score_3M_1st:           float32  
+  Retention_Score_6M_1st:           float32  
+  Retention_Score_1Y_1st:           float32  
+  Retention_Score_2Y_1st:           float32  
+  Churn_Score_3M:                   float32  
+  Churn_Score_6M:                   float32  
+  Churn_Score_1Y:                   float32  
+  Churn_Score_2Y:                   float32  
+  Avg_Vhc_Milage:                   float32  
+  Avg_Vhc_Milage_Monthly_Avg:       float32  
+  Avg_Vhc_Milage_T1:                float32  
+  Avg_Vhc_KM_Diff_T1_T2:            float32  
+  Avg_Vhc_Service_T1_T2_NODS:       float32  
+  Avg_Vhc_Milage_MLPredicted:       float32  
+  Avg_Vhc_Milage_MLPredicted_LM:    float32  
+  Avg_Vhc_Milage_MLPredicted_Monthly_Avg: float32  
+  Avg_Vhc_Cylinder_Cap:             float32  
+  Stdev_Vhc_Cylinder_Cap:           float32  
+  Var_Vhc_Cylinder_Cap:             float32  
+  Stdev_Vhc_Milage:                 float32  
+  Stdev_Vhc_Milage_Monthly_Avg:     float32
+  Stdev_Vhc_Milage_T1:             float32
+  Stdev_Vhc_KM_Diff_T1_T2:         float32
+  Stdev_Vhc_Service_T1_T2_NODS:    float32
+  Stdev_Vhc_Milage_MLPredicted_Monthly_Avg: float32
+  Stdev_Vhc_Milage_MLPredicted:     float32
+  Stdev_Vhc_Milage_MLPredicted_LM:  float32
+  Var_Vhc_Milage:                  float32
+  Var_Vhc_Milage_Monthly_Avg:      float32
+  Var_Vhc_Milage_T1:               float32
+  Var_Vhc_KM_Diff_T1_T2:           float32
+  Var_Vhc_Service_T1_T2_NODS:      float32
+  Var_Vhc_Milage_MLPredicted_Monthly_Avg: float32
+  Var_Vhc_Milage_MLPredicted:       float32
+  Var_Vhc_Milage_MLPredicted_LM:    float32
+
+  # --- Para kol. örnekleri (küçük örnekler, diğerlerini otomatik belirleyiniz) ---  
+  Cust_Avg_Vehicle_Value:           float32  
+  Cust_Avg_Service_Value:           float32  
+  Cust_Sales_Total_EUR_Amt_L3Y:     float32  
+  Cust_Sales_Avg_EUR_Amt_L3Y:       float32  
+  Cust_Service_Total_Amt_L3Y_Inf:   float32  
+  Cust_Service_Avg_Amt_TL_L3Y_Inf:  float32  
+  Cust_Service_Total_Amt_L36Y_Inf:  float32  
+  Cust_Service_Avg_Amt_TL_L36Y_Inf: float32  
+  Cust_Service_Total_Amt_L610Y_Inf: float32  
+  Cust_Service_Avg_Amt_TL_L610Y_Inf: float32  
+  Cust_Sales_Total_TL_Amt_L3YInf:   float32  
+  Cust_Sales_Avg_TL_Amt_L3YInf:     float32  
+  Cust_Sales_Total_TL_Amt_L36YInf:  float32  
+  Cust_Sales_Avg_TL_Amt_L36YInf:    float32  
+  Cust_Sales_Total_TL_Amt_L610YInf: float32  
+  Cust_Sales_Avg_TL_Amt_L610YInf:   float32  
+  Cust_NewCar_Total_TL_Amt_L3YInf:  float32  
+  Cust_NewCar_Avg_TL_Amt_L3YInf:    float32  
+  Cust_NewCar_Total_EUR_Amt_L3Y:    float32  
+  Cust_NewCar_Avg_EUR_Amt_L3Y:      float32  
+  Cust_UsedCar_Total_TL_Amt_L3YInf: float32  
+  Cust_UsedCar_Avg_TL_Amt_L3YInf:    float32  
+  Cust_UsedCar_Total_EUR_Amt_L3Y:    float32  
+  Cust_UsedCar_Avg_EUR_Amt_L3Y:      float32  
+  Cust_Rental_Total_TL_Amt_L3YInf:   float32  
+  Cust_Rental_Avg_TL_Amt_L3YInf:     float32  
+  Cust_Rental_Total_EUR_Amt_L3Y:     float32  
+  Cust_Rental_Avg_EUR_Amt_L3Y:       float32  
+  Cust_AddService_Total_TL_Amt_L3YInf: float32
+  Cust_AddService_Avg_TL_Amt_L3YInf:  float32
+  Cust_AddService_Total_EUR_Amt_L3Y:  float32
+  Cust_AddService_Avg_EUR_Amt_L3Y:    float32
+  Cust_Sales_Total_EUR_Amt_L36Y:      float32
+  Cust_Sales_Avg_EUR_Amt_L36Y:        float32
+  Cust_NewCar_Total_TL_Amt_L36YInf:   float32
+  Cust_NewCar_Avg_TL_Amt_L36YInf:     float32
+  Cust_NewCar_Total_EUR_Amt_L36Y:     float32
+  Cust_NewCar_Avg_EUR_Amt_L36Y:       float32
+  Cust_UsedCar_Total_TL_Amt_L36YInf:  float32
+  Cust_UsedCar_Avg_TL_Amt_L36YInf:    float32
+  Cust_UsedCar_Total_EUR_Amt_L36Y:    float32
+  Cust_UsedCar_Avg_EUR_Amt_L36Y:      float32
+  Cust_Rental_Total_TL_Amt_L36YInf:   float32
+  Cust_Rental_Avg_TL_Amt_L36YInf:     float32
+  Cust_Rental_Total_EUR_Amt_L36Y:     float32
+  Cust_Rental_Avg_EUR_Amt_L36Y:       float32
+  Cust_AddService_Total_TL_Amt_L36YInf: float32
+  Cust_AddService_Avg_TL_Amt_L36YInf:  float32
+  Cust_AddService_Total_EUR_Amt_L36Y:  float32
+  Cust_AddService_Avg_EUR_Amt_L36Y:    float32
+  Cust_Sales_Total_EUR_Amt_L610Y:      float32
+  Cust_Sales_Avg_EUR_Amt_L610Y:        float32
+  Cust_NewCar_Total_TL_Amt_L610YInf:   float32
+  Cust_NewCar_Avg_TL_Amt_L610YInf:     float32
+  Cust_NewCar_Total_EUR_Amt_L610Y:     float32
+  Cust_NewCar_Avg_EUR_Amt_L610Y:       float32
+  Cust_UsedCar_Total_TL_Amt_L610YInf:  float32
+  Cust_UsedCar_Avg_TL_Amt_L610YInf:    float32
+  Cust_UsedCar_Total_EUR_Amt_L610Y:    float32
+  Cust_UsedCar_Avg_EUR_Amt_L610Y:      float32
+  Cust_Rental_Total_TL_Amt_L610YInf:   float32
+  Cust_Rental_Avg_TL_Amt_L610YInf:     float32
+  Cust_Rental_Total_EUR_Amt_L610Y:     float32
+  Cust_Rental_Avg_EUR_Amt_L610Y:       float32
+  Cust_AddService_Total_TL_Amt_L610YInf: float32
+  Cust_AddService_Avg_TL_Amt_L610YInf:  float32
+  Cust_AddService_Total_EUR_Amt_L610Y:  float32
+  Cust_AddService_Avg_EUR_Amt_L610Y:    float32
+  Cust_Service_Total_Amt_L610YInf:      float32
+  Segment_Service_Avg_L36Y:             float32
+  Segment_Sales_Avg_L36Y:               float32
+  Segment_Sales_Avg_L3Y:                float32
+  Segment_Service_Avg_L3Y:              float32
+  Cust_Sales_Total_TL_Amt_LY:           float32
+  Cust_Sales_Avg_TL_Amt_LY:             float32
+  Cust_NewCar_Total_TL_Amt_LY:          float32
+  Cust_NewCar_Avg_TL_Amt_LY:            float32
+  Cust_UsedCar_Total_TL_Amt_LY:         float32
+  Cust_UsedCar_Avg_TL_Amt_LY:           float32
+  Cust_Service_Total_Eur_Amt_LY:        float32
+  Cust_Service_Avg_Eur_Amt_LY:          float32
+  Cust_AddService_Avg_TL_Amt_LY:        float32
+  Cust_AddService_Total_TL_Amt_LY:      float32
+
+  # --- Flag & kategori (küçük) ----  
+  Vhc_ServiceEntry_Flag_L3Y:        int8  
+  Vhc_ServiceEntry_Flag_L36Y:       int8  
+  Vhc_ServiceEntry_Flag_L610Y:      int8  
+  
+  # --- Mini tarih / model-years ----  
+  Cust_1st_Vehicle_ModelYear:       int16  
+  Cust_2nd_Vehicle_ModelYear:       int16  
+  Cust_3rd_Vehicle_ModelYear:       int16  
+  Cust_4th_Vehicle_ModelYear:       int16  
+  Cust_5th_Vehicle_ModelYear:       int16  
+  Cust_1st_Vehicle_ModelYear_INT:   int16  
+  
+  # --- Konversiyon oranları (float32)  
+  Conversion_Rate_L6M:              float32  
+  Conversion_Rate_L1Y:              float32  
+  Conversion_Rate_L2Y:              float32  
+  Conversion_Rate_L3Y:              float32  
+  Conversion_Rate_L36Y:             float32  
+  
+  # --- Diğer sayısal kolonlar (varsayılan) ----  
+  # Bu liste dışında kalan *sayısal* kolonlar otomatik float32 okunur,  
+  # pandas dtypes argümanı içermediği için NaN-problemi yaşanmaz.  
+  # (bkz. ingestion/type_cast.py → “auto_float32_cols”)  
+  
+# -----------------------------------------------------------------------  
+# Tarih/saat olarak parse edilecek sütunlar  
+# -----------------------------------------------------------------------  
+datetime_cols:  
+  - LeadCreatedDate  
+  - Cust_First_Service_Date  
+  - Cust_Last_Service_Date  
+  - Cust_Last_NewCar_Sales_Date  
+  - Cust_Last_UsedCar_Sales_Date  
+  - Cust_Last_Sales_Date  
+  - Cust_Last_Renting_Date  
+  - Cust_First_Sales_Date  
+  - Cust_1st_Vehicle_Date  
+  # YearMonth_* proxy’leri tarih değil; engineering.py dönüştürüyor  
+  

@@ -1,0 +1,10 @@
+outputs/
+*.log
+*.csv
+*.png
+*.jpg
+*.jpeg
+*.tmp
+.DS_Store
+__pycache__/
+.ipynb_checkpoints/ 

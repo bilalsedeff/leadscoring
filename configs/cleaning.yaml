@@ -1,0 +1,27 @@
+# Veri temizleme ve özellik seçimi yapılandırması
+
+# Temel temizleme parametreleri
+num_fill: "median"  # Sayısal kolonlardaki eksik değerler için doldurma stratejisi ("median", "mean")
+cat_fill: "missing"  # Kategorik kolonlardaki eksik değerler için doldurma stratejisi
+outlier_method: "zscore"  # Outlier tespit ve baskılama metodu ("zscore", "iqr", "winsorize", "iforest", null)
+outlier_threshold: 3.0  # Z-score metodu için eşik değeri
+winsorize_limits: [0.01, 0.99]  # Winsorize metodu için sınır limitleri
+apply_outlier_treatment: true  # Outlier baskılamanın uygulanıp uygulanmayacağı
+iforest_contamination: 0.05  # Isolation Forest için beklenen anomali oranı (0.0 - 0.5 arası)
+
+# Özellik seçimi parametreleri
+feature_selection:
+  missing_thresh: 0.3  # Eksik değer oranı bu değerden yüksek olan kolonlar elenecek
+  duplicate: true  # Birebir aynı olan kolonları ele
+  near_zero_var_thresh: 0.01  # Varyans oranı bu değerden düşük olan kolonlar elenecek
+  outlier_method: "iqr"  # Outlier tespiti için kullanılacak metod ('iqr' veya 'zscore')
+  outlier_thresh: 0.5  # Outlier oranı bu değerden yüksek olan kolonlar elenecek
+  correlation_thresh: 0.95  # Kolonlar arası korelasyon bu değerden yüksekse, target ile daha düşük ilişkili olanı ele
+  target_correlation_min: 0.02  # Hedef değişkenle korelasyonu bu değerden düşük olan kolonlar elenecek
+  pca_components: null  # PCA uygulanacaksa kullanılacak bileşen sayısı (null: PCA yok)
+  pca_variance: 0.95  # PCA uygulanacaksa korunacak varyans oranı (pca_components null ise kullanılır)
+
+# Stable feature subset seçimi
+stable_feature_subset:
+  top_k: 60  # Seçilecek maksimum özellik sayısı
+  stability_thr: 0.6  # İstikrar eşiği 

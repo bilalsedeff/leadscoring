@@ -1,0 +1,46 @@
+# Lead Scoring Pipeline Uygulama Konfigürasyonu
+# Bu dosya CLI uygulaması için temel yapılandırmaları içerir
+
+# Servis portları
+mlflow_port: 5000  # MLflow UI portu
+streamlit_port: 8501  # Streamlit dashboard portu
+
+# Dizin ayarları
+output_dir: "outputs"  # Tüm çıktıların kaydedileceği ana dizin
+tmp_dir: "tmp"  # Geçici dosyaların saklanacağı dizin
+
+# Arşiv ve temizlik ayarları
+archive_days: 30  # Bu günden kaç gün önce oluşturulmuş klasörleri arşivlemeli
+
+# Log ayarları
+log_level: "INFO"  # Log seviyesi (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+
+# MLflow ayarları
+mlflow_tracking_uri: "outputs/mlruns"  # MLflow tracking URI
+
+# Streamlit ayarları
+streamlit_title: "Lead Scoring Dashboard"  # Streamlit dashboard başlığı
+streamlit_theme: "light"  # Streamlit tema (light, dark)
+
+# Dizin yapılandırması
+logs_dir: logs                # Log dosyalarının saklanacağı dizin
+
+# Loglama yapılandırması
+log_to_file: true             # Dosyaya log yazılsın mı?
+log_format: "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+
+# Veritabanı yapılandırması
+db_type: sqlite               # SQLite veya PostgreSQL
+db_path: outputs/lead_scoring.db  # SQLite DB yolu
+
+# Performans yapılandırması
+n_jobs: -1                    # Paralel işlem sayısı (-1: tüm çekirdekler)
+chunk_size: 10000             # Büyük veri işlerken kullanılacak chunk boyutu
+
+# Dış servis yapılandırması
+use_mlflow: true              # MLflow kullanılsın mı?
+use_streamlit: true           # Streamlit kullanılsın mı?
+
+# Web arayüzü yapılandırması
+show_plots: true              # Görselleştirmeler gösterilsin mi?
+max_plot_points: 5000         # Grafiklerde gösterilecek maksimum nokta sayısı 

@@ -1,0 +1,192 @@
+# Hiper-parametre ızgaraları (Optuna optimizasyonu için)
+
+# ==================== Baseline Modeller ====================
+baseline_lr:
+  name: "Elastic Net Logistic Regression"
+  C: [0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 50.0, 100.0]
+  l1_ratio: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+  max_iter: [1000, 2000, 4000, 10000]
+  class_weight: [null, "balanced"]
+  solver: ["saga"]
+  tol: [0.0001, 0.001, 0.01]
+
+ridge_lr:
+  name: "Ridge Logistic Regression"
+  C: [0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 50.0, 100.0]
+  max_iter: [1000, 2000, 4000, 10000]
+  class_weight: [null, "balanced"]
+  solver: ["lbfgs", "newton-cg", "sag"]
+  tol: [0.0001, 0.001, 0.01]
+
+lasso_lr:
+  name: "Lasso Logistic Regression"
+  C: [0.001, 0.01, 0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 50.0, 100.0]
+  max_iter: [1000, 2000, 4000, 10000]
+  class_weight: [null, "balanced"]
+  solver: ["liblinear"]
+  tol: [0.0001, 0.001, 0.01]
+
+svm:
+  name: "Support Vector Machine"
+  C: [0.1, 0.5, 1.0, 5.0, 10.0, 50.0, 100.0]
+  kernel: ["linear", "rbf", "poly", "sigmoid"]
+  gamma: ["scale", "auto", 0.001, 0.01, 0.1, 1.0]
+  degree: [2, 3, 4, 5]  # Poly kernel için
+  coef0: [0.0, 0.1, 0.5, 1.0]  # Poly ve sigmoid kernel için
+  probability: [true]
+  class_weight: [null, "balanced"]
+  tol: [0.0001, 0.001, 0.01]
+
+# ==================== Tree-based Modeller ====================
+random_forest:
+  name: "Random Forest"
+  n_estimators: [50, 100, 200, 300, 500, 1000, 2000]
+  max_depth: [3, 5, 7, 10, 15, 20, 30, 50, null]
+  min_samples_split: [2, 5, 10, 20, 50]
+  min_samples_leaf: [1, 2, 4, 8, 16]
+  max_features: ["sqrt", "log2", 0.3, 0.5, 0.7, 0.9, null]
+  bootstrap: [true, false]
+  class_weight: [null, "balanced", "balanced_subsample"]
+  criterion: ["gini", "entropy", "log_loss"]
+  max_leaf_nodes: [null, 50, 100, 200, 500]
+  min_impurity_decrease: [0.0, 0.01, 0.05, 0.1]
+
+lightgbm:
+  name: "LightGBM"
+  num_leaves: [31, 63, 127, 255, 511, 1023]
+  max_depth: [-1, 3, 5, 7, 9, 12, 15, 20]
+  learning_rate: [0.001, 0.005, 0.01, 0.03, 0.05, 0.07, 0.1, 0.2, 0.3]
+  n_estimators: [50, 100, 200, 300, 500, 800, 1000, 2000]
+  min_child_samples: [5, 10, 20, 50, 100, 200, 500]
+  subsample: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+  colsample_bytree: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+  reg_alpha: [0.0, 0.001, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0]
+  reg_lambda: [0.0, 0.001, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0]
+  min_split_gain: [0.0, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0]
+  scale_pos_weight: [1, 3, 5, 10, 20, 50, 100]
+  boosting_type: ["gbdt", "dart", "goss"]
+  objective: ["binary"]
+  metric: ["binary_logloss", "auc", "average_precision"]
+  verbose: [-1]
+  device_type: ["cpu"]  # or "gpu" if GPU available
+
+xgboost:
+  name: "XGBoost"
+  max_depth: [3, 4, 5, 6, 7, 8, 9, 10, 12, 15]
+  eta: [0.001, 0.005, 0.01, 0.03, 0.05, 0.07, 0.1, 0.2, 0.3]
+  gamma: [0, 0.1, 0.2, 0.3, 0.5, 1.0, 3.0, 5.0]
+  subsample: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+  colsample_bytree: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+  colsample_bylevel: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+  colsample_bynode: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+  reg_alpha: [0.0, 0.001, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0]
+  reg_lambda: [0.0, 0.001, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0, 10.0]
+  n_estimators: [50, 100, 200, 300, 500, 700, 1000, 2000]
+  min_child_weight: [1, 3, 5, 7, 10, 15, 20]
+  scale_pos_weight: [1, 3, 5, 10, 20, 50, 100]
+  max_delta_step: [0, 1, 3, 5, 7, 10]
+  grow_policy: ["depthwise", "lossguide"]
+  tree_method: ["auto", "exact", "approx", "hist"]
+  booster: ["gbtree", "gblinear", "dart"]
+  objective: ["binary:logistic"]
+  eval_metric: ["logloss", "auc", "aucpr"]
+  verbosity: [0]
+
+catboost:
+  name: "CatBoost"
+  iterations: [50, 100, 200, 300, 500, 1000, 2000]
+  learning_rate: [0.001, 0.005, 0.01, 0.03, 0.05, 0.07, 0.1, 0.2, 0.3]
+  depth: [3, 4, 5, 6, 7, 8, 10, 12]
+  l2_leaf_reg: [0.1, 1, 3, 5, 10, 30, 100]
+  border_count: [32, 64, 128, 254]
+  bagging_temperature: [0, 0.5, 1.0, 3.0, 10.0]
+  random_strength: [0.1, 0.5, 1.0, 3.0, 10.0]
+  scale_pos_weight: [1, 3, 5, 10, 20, 50, 100]
+  grow_policy: ["SymmetricTree", "Depthwise", "Lossguide"]
+  leaf_estimation_method: ["Newton", "Gradient"]
+  boosting_type: ["Ordered", "Plain"]
+  bootstrap_type: ["Bayesian", "Bernoulli", "MVS"]
+  subsample: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+  rsm: [0.5, 0.6, 0.7, 0.8, 0.9, 1.0]  # colsample_bylevel
+  objective: ["Logloss", "CrossEntropy"]
+  eval_metric: ["AUC", "Accuracy", "Precision", "Recall", "F1", "BalancedAccuracy"]
+  verbose: [0]
+
+# ==================== Ensemble Modeller ====================
+# Değişiklik: Artık model kombinasyonları ve ağırlıkları hardcoded değil, 
+# otomatik olarak validation seti üzerinde optimize ediliyor.
+voting:
+  name: "Voting Ensemble"
+  # Kullanılabilecek modeller, optimizasyon otomatik seçim yapacak
+  base_models: ["lightgbm", "xgboost", "catboost", "random_forest", "baseline_lr"]
+  voting_type: "soft"
+  optimize_weights: true
+  # Optimizasyon metriği
+  optimization_metric: "roc_auc"  # "roc_auc", "f1", "precision", "recall", "average_precision"
+  # Denenecek minimum ve maksimum model sayısı
+  min_models: 2
+  max_models: 4
+  n_weight_steps: 10  # Ağırlık optimizasyonu adım sayısı
+  verbose: [true]
+  n_jobs: [-1]
+
+stacking:
+  name: "Stacking Ensemble"
+  # Tüm base modeller (her çalıştırmada optimize edilecek)
+  base_models: ["lightgbm", "xgboost", "catboost", "random_forest", "baseline_lr"]
+  # Meta model olarak kullanılabilecek modeller
+  meta_models: ["baseline_lr", "lightgbm", "xgboost"]
+  # Default değerler
+  cv: [5]
+  passthrough: [true]
+  n_jobs: [-1]
+  verbose: [0]
+  # Otomatik model seçimi
+  optimize_base_models: true
+  # Hangi meta modeli kullanacağını optimize et
+  optimize_meta_model: true
+  # Optimizasyon metriği
+  optimization_metric: "roc_auc"
+
+source_specific:
+  name: "Source-Based Models"
+  base_model: ["lightgbm", "xgboost", "catboost", "random_forest"]
+  fallback_type: ["global", "weighted_average", "source_similarity"]
+  source_field: ["Source_Final__c", "Channel_Final__c"]
+  weighting_strategy: ["equal", "sample_size", "performance_based"]
+  optimize_per_source: [true, false]
+  min_samples_per_source: [50, 100, 200, 500]
+
+# ==================== Optimizasyon Ayarları ====================
+optuna:
+  n_trials: 100                # Denenecek hiperparametre kombinasyonu sayısı
+  timeout: 7200               # Maksimum çalışma süresi (saniye)
+  direction: "maximize"       # "maximize" veya "minimize"
+  metric: "roc_auc"           # Optimize edilecek metrik
+  pruner: "hyperband"         # "hyperband", "median", "percentile" veya "none"
+  cv_folds: 5                 # Cross-validation fold sayısı
+  early_stopping_rounds: 50   # Early stopping için gerekli round sayısı
+  random_state: 42            # Randomizasyon için seed değeri
+  study_name: "lead_scoring"  # Çalışma adı
+  storage: null               # Optuna veritabanı URI (SQLite, MySQL, PostgreSQL)
+  load_if_exists: true        # Varsa önceki çalışmayı yükle
+  sampler: "tpe"              # "tpe", "random", "grid", "cmaes"
+  multivariate: true          # TPE sampler için multivariate
+  n_startup_trials: 10        # TPE sampler için başlangıç random deneme sayısı
+
+# ==================== Ensemble Model Seçimi ====================
+ensemble_selection:
+  # Otomatik model seçimi yapılsın mı?
+  auto_select: true
+  # Ensemble için değerlendirilecek maksimum farklı model sayısı
+  max_base_models: 5
+  # Denenecek maksimum ensemble kombinasyonu
+  max_combinations: 30
+  # Otomatik seçilecek top-N model
+  top_n_models: 4
+  # Değerlendirme metriği
+  eval_metric: "roc_auc"
+  # Test stratejisi: "cv" (cross-validation) veya "validation" (ayrı validation seti)
+  eval_strategy: "validation"
+  # Cross-validation fold sayısı (eval_strategy="cv" ise)
+  cv_folds: 5

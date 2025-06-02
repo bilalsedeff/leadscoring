@@ -1,0 +1,124 @@
+%% Lead Scoring Pipeline – full relational architecture (v2.3)
+%% Save as lead_scoring_architecture.mmd and preview at https://mermaid.live/
+
+flowchart TB
+    subgraph Veri_Kaynaklari["Veri Kaynakları"]
+        raw_data["Conversion_Datamart.csv"]
+    end
+
+    subgraph Split_Pipeline["Split Pipeline (Data Leak Önleme)"]
+        raw_data --> split_process
+        split_process["time_group_split (Ham Veri Bölme)"]
+        split_process -- "account_Id bazlı grup bütünlüğü" --> balanced_split
+        balanced_split["force_balance (Her Sette Veri Olmasını Garanti Eder)"]
+        balanced_split --> train_raw
+        balanced_split --> val_raw
+        balanced_split --> test_raw
+        train_raw["Train Raw Data"] --> cleaner_fit
+        cleaner_fit["Basic Cleaner (SADECE Train'de fit)"]
+        cleaner_fit -- "transform (veri sızıntısı yok)" --> train_df
+        cleaner_fit -- "transform (veri sızıntısı yok)" --> val_df
+        cleaner_fit -- "transform (veri sızıntısı yok)" --> test_df
+        train_raw --> |"account_Id"| id_mapping
+        id_mapping["Group ID Mapping"]
+        id_mapping --> train_df
+        train_df["Train Processed"] --> feature_eng
+        val_df["Validation Processed"] --> |"deployment zinciri"| val_fe
+        test_df["Test Processed"] --> |"deployment zinciri"| test_fe
+    end
+
+    subgraph Feature_Engineering["Özellik Mühendisliği"]
+        feature_eng["AdvancedFeatureEngineer (SADECE Train'de fit)"]
+        train_df --> |"source"| group_splitting
+        group_splitting["Source Bazlı Modelleme"]
+        feature_eng --> train_features
+        train_features["Train Features"] --> statistical_tests
+        statistical_tests["İstatistiksel Testler (Train Only)"]
+        statistical_tests --> feature_importance
+        feature_importance["Özellik Önem Skorları"]
+        feature_importance --> selected_features
+        selected_features["Seçilen Özellikler"] --> model_training
+        feature_eng -- "transform" --> val_fe["Validation Features"]
+        feature_eng -- "transform" --> test_fe["Test Features"]
+    end
+
+    subgraph Modelleme["Modelleme"]
+        config_files["YAML Konfigürasyon Dosyaları"]
+        config_files -- "Hydra Config" --> model_training
+        model_training["Model Eğitimi (Train Features)"]
+        calibration["Model Kalibrasyonu (Validation)"]
+        model_training --> calibration
+        calibration --> final_model
+        final_model["Final Model"] --> predictions
+        predictions["Predictions (Test)"]
+    end
+
+    subgraph Evaluation["Değerlendirme"]
+        predictions --> metrics
+        metrics["Model Metrikleri (AUC, Precision, Recall)"]
+        metrics --> segment_analysis
+        segment_analysis["Segment Analizi (Low, Medium, High)"]
+        segment_analysis --> model_registry
+        model_registry["MLflow Model Registry"]
+    end
+
+    subgraph CLI_Interface["CLI Arayüzü"]
+        cli["Lead Scoring CLI"]
+        cli -- "Run Komutu" --> split_process
+        cli -- "Stats Komutu" --> auto_split_check
+        auto_split_check{"Split Var mı?"}
+        auto_split_check -- "Evet" --> statistical_tests
+        auto_split_check -- "Hayır + auto_split=True" --> split_process
+        cli -- "Train Komutu" --> model_training
+        cli -- "Predict Komutu" --> predictions
+    end
+
+    subgraph Deployment["Görselleştirme & Sunum"]
+        model_registry --> streamlit
+        streamlit["Streamlit Dashboard"]
+    end
+
+    %% Yeni iyileştirmeler ve anti-leak mekanizmaları
+    
+    %% Link Styles
+    linkStyle 0 stroke:#2ecd71,stroke-width:2px;
+    linkStyle 1 stroke:#2ecd71,stroke-width:2px;
+    linkStyle 2 stroke:#2ecd71,stroke-width:2px;
+    linkStyle 3 stroke:#2ecd71,stroke-width:2px;
+    linkStyle 4 stroke:#2ecd71,stroke-width:2px;
+    linkStyle 5 stroke:#e74c3c,stroke-width:2px,stroke-dasharray: 5 5;
+    linkStyle 6 stroke:#e74c3c,stroke-width:2px,stroke-dasharray: 5 5;
+    linkStyle 7 stroke:#e74c3c,stroke-width:2px,stroke-dasharray: 5 5;
+    linkStyle 8 stroke:#3498db,stroke-width:2px;
+    linkStyle 9 stroke:#3498db,stroke-width:2px;
+    
+    %% Style Definitions
+    classDef dataNode fill:#f1c40f,stroke:#f39c12,color:#000
+    classDef processNode fill:#3498db,stroke:#2980b9,color:#fff
+    classDef modelNode fill:#2ecc71,stroke:#27ae60,color:#fff
+    classDef evaluationNode fill:#9b59b6,stroke:#8e44ad,color:#fff
+    classDef leakageControl fill:#e74c3c,stroke:#c0392b,color:#fff
+    classDef deploymentNode fill:#1abc9c,stroke:#16a085,color:#fff
+    classDef configNode fill:#95a5a6,stroke:#7f8c8d,color:#fff
+    classDef checkNode fill:#e67e22,stroke:#d35400,color:#fff
+    
+    %% Apply Styles
+    class raw_data,train_df,val_df,test_df,train_features,val_fe,test_fe dataNode
+    class split_process,feature_eng,model_training,calibration processNode
+    class final_model,predictions modelNode
+    class metrics,segment_analysis,statistical_tests,feature_importance evaluationNode
+    class cleaner_fit,balanced_split leakageControl
+    class streamlit,model_registry deploymentNode
+    class config_files configNode
+    class auto_split_check checkNode
+    class cli deploymentNode
+
+%% Description
+%% Bu mimari şeması, lead scoring projesinin veri akışını ve bileşenlerini gösterir.
+%% 
+%% Önemli Değişiklikler:
+%% 1. Veri Sızıntısı Önleme: Ham veri önce bölünür, sadece train verisi üzerinde fit yapılır
+%% 2. Force Balance Mekanizması: Test ve validation setlerinin boş olmamasını garanti eder
+%% 3. Account_Id Bazlı Grup Bütünlüğü: Aynı hesaba ait veriler aynı sette tutulur
+%% 4. CLI Arayüzü: Stats komutu çalıştırıldığında split kontrolü yapılır, bulunamazsa otomatik oluşturulur
+%% 5. Hydra Konfigürasyon: Model parametreleri YAML dosyalarından okunur, hardcoded değerler kullanılmaz

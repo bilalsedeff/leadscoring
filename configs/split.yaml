@@ -1,0 +1,55 @@
+# Veri bölme yapılandırması
+
+# Bölme yöntemi
+split_method: time  # time veya random
+
+# Zaman bazlı bölme için parametreler
+time_col: "LeadCreatedDate"  # Zaman kolonu
+train_cutoff: "2024-06-30"   # Eğitim kümesi için son tarih - 2024-06-30'a kadar
+val_cutoff: "2024-11-30"     # Doğrulama kümesi için son tarih - 2024-11-30'a kadar
+test_cutoff: "2025-04-30"    # Test kümesi için son tarih - 2025-04-30'a kadar
+
+# Geriye dönük uyumluluk için YYYYMM formatı da desteklenir
+# train_cutoff: 62024  # 2024 Haziran'a kadar
+# val_cutoff: 112024   # 2024 Kasım'a kadar
+# test_cutoff: 42025   # 2025 Nisan'a kadar
+
+# Rastgele bölme için parametreler
+val_size: 0.2
+test_size: 0.1
+random_seed: 42
+
+# Genel parametreler
+group_col: "account_Id"  # Grup bazlı bölme için kolon (zaman bazlı bölmede kullanılır)
+target_col: "Target_IsConverted"  # Hedef değişken
+
+# Cross-validation parametreleri
+cv_folds: 5  # Cross-validation için fold sayısı
+
+# Segmentasyon eşikleri
+bin_edges: [0.0, 0.25, 0.75, 1.0]  # Olasılık bölme noktaları
+bin_labels: ['Low', 'Medium', 'High']  # Segment etiketleri
+
+# Kesişen hesapları ele alma stratejisi
+handle_overlapping_accounts: true  # Kesişen hesapları işle
+account_assignment_strategy: first_observed  # İlk gözlemlendiği sete ata
+
+# Veri dengeleme
+force_balance: true  # Her sette veri olmasını zorla
+
+# Kanal bazlı eğitim için
+source_column: "Source_Final__c"  # Web, App, Ecommerce, Social Media
+channels:
+  - "Web"
+  - "App" 
+  - "Ecommerce"
+  - "Social Media"
+
+# Veri sızıntısı önleme
+drop_leakage_cols:
+  - "LeadId"
+  - "account_Id"
+  - "Id"
+  - "Opportunityid" 
+  - "Contactid"
+  - "AccountId"

@@ -1,0 +1,127 @@
+# Lead Scoring Pipeline Mimarisi
+
+Bu belge, lead scoring pipeline'ının mimari tasarımını ve temel bileşenlerini açıklar.
+
+## Pipeline Bileşenleri
+
+### 1. Veri Hazırlama ve Bölme
+- **Modül**: `src/pipelines/split.py`
+- **Amaç**: Ham veriyi temizleyip zaman bazlı olarak train, validation ve test setlerine böler
+- **Özellikler**:
+  - Veri sızıntısını önlemek için önce ham veri bölünür, sonra sadece train seti üzerinde temizleyici eğitilir
+  - `force_balance=True` parametresi ile her sette veri olması garanti edilir
+  - Zaman bazlı bölme: 07/2024'e kadar train, 12/2024'e kadar validation, 04/2025'e kadar test
+  - account_Id bazlı grup bütünlüğü korunur, aynı hesaba ait kayıtlar aynı sette bulunur
+
+### 2. İstatistiksel Analizler
+- **Modül**: `src/pipelines/statistical_tests.py`
+- **Amaç**: Değişkenlerin hedef değişkenle ilişkisini ve anlamlılığını test eder
+- **Özellikler**:
+  - Chi-square, T-test, ANOVA, Korelasyon analizleri yapılır
+  - ID kolonları, tarih kolonları ve yüksek kardinaliteli kolonlar otomatik olarak dışlanır
+  - Analizler yalnızca train seti üzerinde yapılır
+  - Her analiz için görsel ve tablo çıktıları oluşturulur
+- **Geliştirilmiş Filtreleme**:
+  - `EXCLUDE_COLUMNS` listesi ile ID ve tarih kolonları dışlanır
+  - `HIGH_CARDINALITY_COLUMNS` listesi ile Branch_Name gibi yüksek kardinaliteli kolonlar dışlanır
+  - Tüm "*Date" içeren kolonlar otomatik olarak analiz dışı bırakılır
+  - Analiz çıktı klasörüne analize dahil olan ve dışlanan kolonların listesi kaydedilir
+
+### 3. Özellik Mühendisliği
+- **Modül**: `src/features/engineering.py`
+- **Amaç**: Mevcut özelliklerden yeni ve anlamlı özellikler türetir
+- **Özellikler**:
+  - Zamansal özellikler (gün, ay, yıl, hafta, vb.)
+  - Grup bazlı (örn. account_Id) istatistikler
+  - Etkileşim özellikleri
+  - Normalize edilmiş özellikler
+
+### 4. Özellik Önem Analizi
+- **Modül**: `src/pipelines/feature_importance.py`
+- **Amaç**: Model üzerinde en etkili özellikleri belirler
+- **Özellikler**:
+  - SHAP değerleri hesaplanır
+  - Permütasyon önemi analizi yapılır
+  - Cross-validation ile özellik kararlılığı ölçülür
+  - Anlamlı bulunan özellikler seçilir
+
+### 5. Model Eğitimi
+- **Modül**: `src/pipelines/train.py`
+- **Amaç**: Lead conversion tahmin modeli eğitir
+- **Özellikler**:
+  - Hydra konfigürasyonu ile esnek model parametreleri
+  - MLflow ile model izleme ve kayıt
+  - Çeşitli model türleri (LightGBM, XGBoost, vb.)
+  - Kaynak bazlı alt modeller
+
+### 6. Model Kalibrasyonu
+- **Modül**: `src/calibration/calibrator.py`
+- **Amaç**: Model olasılık tahminlerini kalibre eder
+- **Özellikler**:
+  - Platt Scaling veya Isotonic Regression ile kalibrasyon
+  - Olasılık eşikleri belirleme (Low, Medium, High potansiyel)
+  - Segment bazlı gerçek dönüşüm oranları doğrulama
+
+### 7. Model Değerlendirme
+- **Modül**: `src/evaluation/evaluator.py`
+- **Amaç**: Model performansını ölçer ve raporlar
+- **Özellikler**:
+  - Precision, Recall, F1, AUC metrikleri
+  - Confusion matrix analizi
+  - TPR ve TNR optimizasyonu
+  - Segment bazlı analiz
+
+### 8. Görselleştirme
+- **Modül**: `streamlit_app/app.py`
+- **Amaç**: Sonuçları interaktif olarak görselleştirir
+- **Özellikler**:
+  - Model metrikleri dashboard'ı
+  - Özellik önemleri görselleştirmesi
+  - Tahmin dağılımı grafikleri
+  - Segment analizi
+
+## Veri Akışı
+
+```
++----------------+     +----------------+     +-------------------+
+| Ham Veri       | --> | Zaman Bazlı    | --> | Temizleyici       |
+| (Datamart CSV) |     | Split          |     | (Train'de fit)    |
++----------------+     +----------------+     +-------------------+
+                                                        |
++----------------+     +----------------+     +-------------------+
+| Model Eğitimi  | <-- | Özellik Seçimi | <-- | İstatistik Testler|
+| (Source bazlı) |     | (SHAP/Permüt.) |     | (Otomatik filtre) |
++----------------+     +----------------+     +-------------------+
+        |
+        v
++----------------+     +----------------+     +-------------------+
+| Kalibrasyon    | --> | Model         | --> | Görselleştirme    |
+| (Low/Med/High) |     | Değerlendirme |     | (Streamlit)       |
++----------------+     +----------------+     +-------------------+
+```
+
+## Anti-Leak Mimarisi
+
+Lead Scoring pipeline'ı, veri sızıntısını (data leakage) önlemek için özel olarak tasarlanmıştır:
+
+1. **Zaman Bazlı Split İlk Adımda**: Herhangi bir temizleme veya ön işleme yapmadan önce ham veri zaman bazlı olarak bölünür. Bu sayede test ve validation verilerinin özellikleri eğitim aşamasında sızmaz.
+
+2. **Sadece Train'de Fit**: Tüm veri temizleyicileri, özellik mühendisliği transformerleri ve model seçicileri SADECE train verisi üzerinde fit edilir.
+
+3. **Transform Tüm Setlere**: Fit edilmiş transformerlar daha sonra train, validation ve test setlerine ayrı ayrı uygulanır.
+
+4. **Account Bazlı Bütünlük**: Aynı account_Id'ye sahip kayıtlar aynı veri setine düşer, böylece model gerçek dünyada karşılaşmadığı hesaplar üzerinde test edilebilir.
+
+5. **Time Travel Önleme**: LeadCreatedDate bazlı bölme ile zaman yolculuğu tarzı sızıntılar önlenir. Gelecekte oluşacak veriler train setinde kullanılmaz.
+
+## İyileştirmeler ve Güncellemeler
+
+### İstatistiksel Analizlerde İyileştirmeler
+- **Otomatik Kolon Filtreleme**: ID, tarih ve yüksek kardinaliteli kolonlar otomatik olarak analizlerden çıkarılır
+- **CLI Parametreleri**: Hangi kolonların dışlanacağı komut satırı parametreleri ile kontrol edilebilir
+- **Analiz Önceliği**: Önce anlamlılık testleri yapılır, sonra görselleştirmeler oluşturulur
+
+### Experiment ve Run Yönetimi
+- **Output Dizin Yapısı**: Her run için zaman damgalı klasör oluşturulur
+- **Merkezi Metadata**: Her run için metadata.json dosyası oluşturulur
+- **CLI Entegrasyonu**: Komut satırı arayüzü ile tüm pipeline adımları yönetilebilir
